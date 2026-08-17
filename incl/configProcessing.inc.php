@@ -146,6 +146,10 @@ class GlobalConfig {
         if (!is_array($originalVar)) {
             $variableType = gettype($originalVar);
             $result       = self::convertPossibleBoolean($input);
+            // Settings whose default is null (e.g. EXTERNAL_GROCY_URL) have type "NULL";
+            // settype() to NULL would silently discard the override, so keep the value as-is.
+            if ($variableType == "NULL")
+                return $result;
             settype($result, $variableType);
             return $result;
         } else

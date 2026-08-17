@@ -265,7 +265,7 @@ class DatabaseConnection {
     }
 
     /**
-     * Checks if enough time has passed to revert to STATE_CONSUME
+     * Checks if enough time has passed to revert to the base state (STATE_PURCHASE)
      * @param int $timestamp timestamp when state was set
      * @return bool True if REVERT_TIME = 0 or enough time has passed
      */

@@ -10,9 +10,11 @@
 #   - Consume stays active until REVERT_TIME minutes pass or another mode is scanned;
 #   - Consume (spoiled), Consume all and Open revert to Purchase after one scan when REVERT_SINGLE is on;
 #   - the time-out (REVERT_TIME) of any mode returns to Purchase.
+# Source-level version of the same change: github.com/roosmsg/barcodebuddy (master).
 INCL=/app/bbuddy/incl
 DB=$INCL/db.inc.php
 PR=$INCL/processing.inc.php
+ST=/app/bbuddy/menu/settings.php
 
 if grep -q 'if ($state == STATE_CONSUME || $this->revertBackToConsume($since))' "$DB"; then
     sed -i \
@@ -38,6 +40,21 @@ else
     echo "[default-purchase] WARNING: pattern not found in processing.inc.php - upstream changed, revert target left as-is"
 fi
 
+# Settings page: the labels of the two revert options must say Purchase, not Consume.
+# (In sed replacements '&' means "the match", hence the escaped \& in &quot;.)
+if grep -q 'Revert state to &quot;Consume&quot; after time passed in minutes' "$ST"; then
+    sed -i \
+        -e 's/Revert state to &quot;Consume&quot; after time passed in minutes/Revert state to \&quot;Purchase\&quot; after time passed in minutes/' \
+        -e 's/Revert after single item scan in &quot;Open&quot; or &quot;Spoiled&quot; mode/Revert to \&quot;Purchase\&quot; after single item scan in \&quot;Open\&quot;, \&quot;Spoiled\&quot; or \&quot;Consume all\&quot; mode/' \
+        "$ST"
+    echo "[default-purchase] settings.php patched: revert labels say Purchase"
+elif grep -q 'Revert state to &quot;Purchase&quot;' "$ST"; then
+    echo "[default-purchase] settings.php already patched"
+else
+    echo "[default-purchase] WARNING: pattern not found in settings.php - labels left as-is"
+fi
+
 php -l "$DB" >/dev/null 2>&1 || echo "[default-purchase] ERROR: db.inc.php has a syntax error after patching"
 php -l "$PR" >/dev/null 2>&1 || echo "[default-purchase] ERROR: processing.inc.php has a syntax error after patching"
+php -l "$ST" >/dev/null 2>&1 || echo "[default-purchase] ERROR: settings.php has a syntax error after patching"
 exit 0

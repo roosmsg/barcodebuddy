@@ -1,0 +1,21 @@
+services:
+  barcodebuddy:
+    image: f0rc3/barcodebuddy:latest
+    container_name: barcodebuddy
+    restart: unless-stopped
+    # Barcode Buddy heeft Consume als basismodus; dit script maakt Purchase de basismodus (fail-soft, elke start opnieuw)
+    command: ["/bin/sh", "-c", "/patch-default-purchase.sh; exec /app/supervisor"]
+    ports:
+      - "9284:80"
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: "${TZ:?set TZ in Portainer}"
+      ATTACH_BARCODESCANNER: "true"
+      BBUDDY_EXTERNAL_GROCY_URL: "${BBUDDY_EXTERNAL_GROCY_URL:?set BBUDDY_EXTERNAL_GROCY_URL in Portainer}"
+    volumes:
+      - /opt/barcodebuddy/config:/config
+      - /opt/barcodebuddy/plugins/EventReceiver.php:/app/bbuddy/plugins/EventReceiver.php
+      - /opt/barcodebuddy/patch-default-purchase.sh:/patch-default-purchase.sh
+    devices:
+      - "${BARCODE_SCANNER_DEVICE:?set BARCODE_SCANNER_DEVICE in Portainer}:/dev/input/event0"

@@ -5,7 +5,10 @@ upstream Docker image `f0rc3/barcodebuddy` (runtime: nginx, php8, redis, evtest,
 supervisor) and replaces the application tree `/app/bbuddy` with this repository,
 re-applying the small edits the upstream Dockerfile makes. Everything on `master`
 is therefore live: the auto-create plugin, Purchase as base mode, the settings
-labels and the `BBUDDY_*` env-override fix.
+labels, the `BBUDDY_*` env-override fix and the repaired Plus Supermarkt lookup
+provider (upstream still points at the decommissioned host
+`pls-sprmrkt-mw.prd.vdc1.plus.nl`; the fork uses the PLUS app endpoint
+`apiframna.app.plus.nl/api/app/v1/products_by_barcode/<ean>`).
 
 Build on the Docker host (no local checkout needed):
 

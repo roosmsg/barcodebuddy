@@ -40,25 +40,61 @@ class ProviderPlusSupermarkt extends LookupProvider {
             $barcode = str_pad(substr($barcode, 0, 6), 13, '0');
         }
 
-        $url    = 'https://pls-sprmrkt-mw.prd.vdc1.plus.nl/api/v3/proxy/eancode/' . $barcode;
+        // Endpoint of the PLUS mobile app (com.mobgen.plus). The former middleware
+        // host pls-sprmrkt-mw.prd.vdc1.plus.nl was decommissioned in 2026; this
+        // endpoint answers anonymously and returns 404 for unknown barcodes.
+        $url    = 'https://apiframna.app.plus.nl/api/app/v1/products_by_barcode/' . $barcode . '?store_number=0';
         $result = $this->execute($url, METHOD_GET);
 
-        if (!isset($result['sku'])) {
+        if (!is_array($result) || !isset($result['key']) || empty($result['description'])) {
             return null;
         }
 
-        $productName = $result['name'];
+        $productName = self::buildProductName($result);
         $genericName = null;
 
         if ($this->useGenericName) {
-            $productUrl = 'https://pls-sprmrkt-mw.prd.vdc1.plus.nl/api/v3/product/' . $result['sku'];
-            $productResult = $this->execute($productUrl, METHOD_GET);
-
-            if (isset($productResult['wettelijke_naam']) && !empty($productResult['wettelijke_naam'])) {
-                $genericName = $productResult['wettelijke_naam'];
-            }
+            $genericName = self::findLegalDescription($result);
         }
 
         return self::createReturnArray($this->returnNameOrGenericName($productName, $genericName));
+    }
+
+    /**
+     * Combines brand and description ("Calvé" + "Pindakaas regular"),
+     * unless the description already starts with the brand.
+     * @param array $product Decoded product JSON
+     * @return string
+     */
+    private static function buildProductName(array $product): string {
+        $description = trim($product['description']);
+        $brand       = isset($product['brand_name']) ? trim((string)$product['brand_name']) : '';
+        if ($brand === '' || stripos($description, $brand) === 0) {
+            return $description;
+        }
+        return $brand . ' ' . $description;
+    }
+
+    /**
+     * Returns the legal description ("Wettelijke omschrijving") from the
+     * product information sections, or null if not present.
+     * @param array $product Decoded product JSON
+     * @return string|null
+     */
+    private static function findLegalDescription(array $product): ?string {
+        if (!isset($product['product_information']['main_items']) || !is_array($product['product_information']['main_items'])) {
+            return null;
+        }
+        foreach ($product['product_information']['main_items'] as $section) {
+            if (!isset($section['items']) || !is_array($section['items'])) {
+                continue;
+            }
+            foreach ($section['items'] as $item) {
+                if (isset($item['title'], $item['text']) && $item['title'] === 'Wettelijke omschrijving' && trim($item['text']) !== '') {
+                    return trim($item['text']);
+                }
+            }
+        }
+        return null;
     }
 }

@@ -1,0 +1,6 @@
+.git
+.github
+example/screenshots
+homelab/docker-compose.yml
+homelab/README.md
+homelab/patch-default-purchase.sh

@@ -255,8 +255,8 @@ class DatabaseConnection {
         if ($row = $res->fetchArray()) {
             $state = $row["currentState"];
             $since = $row["since"];
-            if ($state == STATE_CONSUME || $this->revertBackToConsume($since))
-                return STATE_CONSUME;
+            if ($state == STATE_PURCHASE || $this->revertBackToConsume($since))
+                return STATE_PURCHASE;
             else
                 return $state;
         } else {

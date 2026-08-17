@@ -116,6 +116,8 @@ if (isset($_GET["ajaxrefresh"])) {
 $webUi = new WebUiGenerator(MENU_MAIN);
 $webUi->addHeader('<link rel="stylesheet" href="./incl/css/styleMain.css?v=' . BB_VERSION . '">', true);
 
+$webUi->addCard("Modus", getHtmlModeButtons(), null, "modeCard");
+
 
 $link = (new MenuItemLink())
     ->setText("Delete all")
@@ -142,6 +144,34 @@ $webUi->addScript("updateRedisCacheAndFederation(false)");
 $webUi->addFooter();
 displayFederationPopupHtml($webUi);
 $webUi->printHtml();
+
+/**
+ * Card on the overview page: shows the current mode and offers buttons to switch it.
+ * The buttons call index.php?mode=<mode>, handled by processModeChangeGetParameter().
+ */
+function getHtmlModeButtons(): string {
+    global $CONFIG;
+    $current = DatabaseConnection::getInstance()->getTransactionState();
+    $buttons = array(
+        array("purchase", STATE_PURCHASE, "Toevoegen (ingekocht)"),
+        array("consume", STATE_CONSUME, "Verwijderen"),
+        array("consume_all", STATE_CONSUME_ALL, "Alles verwijderen (0)"),
+        array("shoppinglist", STATE_ADD_SL, "Zet op boodschappenlijst")
+    );
+    $names = array(
+        STATE_PURCHASE => "Toevoegen (ingekocht)", STATE_CONSUME => "Verwijderen", STATE_CONSUME_ALL => "Alles verwijderen (0)",
+        STATE_ADD_SL => "Zet op boodschappenlijst", STATE_CONSUME_SPOILED => "Bedorven", STATE_OPEN => "Geopend", STATE_GETSTOCK => "Inventariseren"
+    );
+    $html = '<p>Huidige modus: <b>' . (isset($names[$current]) ? $names[$current] : "?") . '</b></p>';
+    $html .= '<div style="display: flex; flex-wrap: wrap; gap: 0.5em;">';
+    foreach ($buttons as $b) {
+        $active = ($b[1] == $current) ? " mdl-button--accent" : " mdl-button--colored";
+        $html   .= '<button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect' . $active . '" ' .
+            'onclick="window.location.href=\'' . $CONFIG->getPhpSelfWithBaseUrl() . '?mode=' . $b[0] . '\'">' . $b[2] . '</button>';
+    }
+    $html .= '</div>';
+    return $html;
+}
 
 function displayFederationPopupHtml(WebUiGenerator &$webUi): void {
     $config = BBConfig::getInstance();

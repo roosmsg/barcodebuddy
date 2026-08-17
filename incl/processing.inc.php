@@ -295,21 +295,31 @@ function processModeChangeGetParameter(string $modeParameter): void {
     switch (trim($modeParameter)) {
         case "consume":
             $db->setTransactionState(STATE_CONSUME);
+            createLogModeChange(STATE_CONSUME);
             break;
         case "consume_s":
             $db->setTransactionState(STATE_CONSUME_SPOILED);
+            createLogModeChange(STATE_CONSUME_SPOILED);
             break;
         case "purchase":
             $db->setTransactionState(STATE_PURCHASE);
+            createLogModeChange(STATE_PURCHASE);
             break;
         case "open":
             $db->setTransactionState(STATE_OPEN);
+            createLogModeChange(STATE_OPEN);
             break;
         case "inventory":
             $db->setTransactionState(STATE_GETSTOCK);
+            createLogModeChange(STATE_GETSTOCK);
             break;
         case "shoppinglist":
             $db->setTransactionState(STATE_ADD_SL);
+            createLogModeChange(STATE_ADD_SL);
+            break;
+        case "consume_all":
+            $db->setTransactionState(STATE_CONSUME_ALL);
+            createLogModeChange(STATE_CONSUME_ALL);
             break;
     }
 }

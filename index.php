@@ -154,12 +154,12 @@ function getHtmlModeButtons(): string {
     $current = DatabaseConnection::getInstance()->getTransactionState();
     $buttons = array(
         array("purchase", STATE_PURCHASE, "Toevoegen (ingekocht)"),
-        array("consume", STATE_CONSUME, "Verwijderen"),
-        array("consume_all", STATE_CONSUME_ALL, "Alles verwijderen (0)"),
+        array("consume", STATE_CONSUME, "Verwijderen (per stuk)"),
+        array("consume_all", STATE_CONSUME_ALL, "Alles verwijderen"),
         array("shoppinglist", STATE_ADD_SL, "Zet op boodschappenlijst")
     );
     $names = array(
-        STATE_PURCHASE => "Toevoegen (ingekocht)", STATE_CONSUME => "Verwijderen", STATE_CONSUME_ALL => "Alles verwijderen (0)",
+        STATE_PURCHASE => "Toevoegen (ingekocht)", STATE_CONSUME => "Verwijderen (per stuk)", STATE_CONSUME_ALL => "Alles verwijderen",
         STATE_ADD_SL => "Zet op boodschappenlijst", STATE_CONSUME_SPOILED => "Bedorven", STATE_OPEN => "Geopend", STATE_GETSTOCK => "Inventariseren"
     );
     $html = '<p>Huidige modus: <b>' . (isset($names[$current]) ? $names[$current] : "?") . '</b></p>';

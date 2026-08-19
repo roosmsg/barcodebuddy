@@ -90,7 +90,9 @@ RUN set -eux; \
     grep -Fq 'IS_DOCKER=true' /app/bbuddy/example/grabInput.sh; \
     grep -Fq 'const DEFAULT_USE_REDIS = "1";' /app/bbuddy/incl/db.inc.php; \
     rm -rf /app/bbuddy/docker /app/bbuddy/.dockerignore; \
+    rm -rf /app/bbuddy/data; \
     ln -s /config/data /app/bbuddy/data; \
+    [ "$(readlink /app/bbuddy/data)" = "/config/data" ]; \
     chmod 0755 \
         /usr/local/bin/barcodebuddy-cron \
         /usr/local/bin/barcodebuddy-entrypoint; \

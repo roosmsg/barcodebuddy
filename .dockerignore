@@ -6,3 +6,5 @@ example/screenshots
 docs
 docker/docker-compose.yml
 docker/README.md
+docker/.env
+docker/.env.*

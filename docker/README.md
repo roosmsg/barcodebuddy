@@ -22,6 +22,13 @@ Then redeploy the `barcodebuddy` Portainer stack from
 existing deployment. Port 80 is exposed internally; TLS remains terminated by
 the NPM reverse proxy.
 
+Set `BBUDDY_EXTERNAL_GROCY_URL`, `BARCODE_SCANNER_DEVICE` and `TZ` as private
+Portainer stack environment variables. The compose file deliberately contains
+no concrete Grocy URL, host input-device name or timezone. The scanner device
+is always exposed inside the container as `/dev/input/event0`. For local Compose
+use, place the values in `docker/.env`; that file is excluded from Git and from
+the Docker build context.
+
 The entrypoint supports the existing `PUID`, `PGID`, `TZ`,
 `ATTACH_BARCODESCANNER`, `IGNORE_SSL_CA`, `IGNORE_SSL_HOST` and `BBUDDY_*`
 environment variables. Supervisor runs Redis, PHP-FPM, Nginx, the websocket

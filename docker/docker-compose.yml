@@ -1,7 +1,7 @@
 services:
   barcodebuddy:
-    # Eigen image, gebouwd uit de fork github.com/roosmsg/barcodebuddy (homelab/Dockerfile) bovenop f0rc3/barcodebuddy.
-    # Bijwerken: docker build -t barcodebuddy:homelab -f homelab/Dockerfile https://github.com/roosmsg/barcodebuddy.git#master
+    # Eigen image, gebouwd uit de fork github.com/roosmsg/barcodebuddy (docker/Dockerfile) bovenop f0rc3/barcodebuddy.
+    # Bijwerken: docker build -t barcodebuddy:homelab -f docker/Dockerfile https://github.com/roosmsg/barcodebuddy.git#master
     # en daarna de stack opnieuw uitrollen. Staat buiten Watchtower (lokaal image).
     image: barcodebuddy:homelab
     container_name: barcodebuddy

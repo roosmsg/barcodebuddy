@@ -46,6 +46,8 @@ class LookupProvider {
     protected $providerName;
     protected $ignoredResultCodes = null;
     protected $providerConfigKey = null;
+    /** @var string|null Class name of the exception thrown by the last execute() call, null if it succeeded */
+    protected $lastExecuteExceptionClass = null;
 
     function __construct(string $apiKey = null) {
         $this->useGenericName = BBConfig::getInstance()["USE_GENERIC_NAME"];
@@ -113,11 +115,13 @@ class LookupProvider {
      * @return bool|mixed|string|null
      */
     protected function execute(string $url, string $method = METHOD_GET, array $formdata = null, string $userAgent = null, ?array $headers = null, bool $decodeJson = true, string $jsonData = null) {
+        $this->lastExecuteExceptionClass = null;
         $curl = new CurlGenerator($url, $method, $jsonData, null, true, $this->ignoredResultCodes, $formdata, $userAgent, $headers);
         try {
             $result = $curl->execute($decodeJson);
         } catch (Exception $e) {
-            $class = get_class($e);
+            $class                           = get_class($e);
+            $this->lastExecuteExceptionClass = $class;
             switch ($class) {
                 case 'InvalidServerResponseException':
                     API::logError("Could not connect to " . $this->providerName . ".", false);

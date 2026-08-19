@@ -19,6 +19,8 @@ require_once __DIR__ . "/../api.inc.php";
 
 class ProviderAlbertHeijn extends LookupProvider {
     const USER_AGENT = "Appie/8.22.3";
+    /** Renew the token this many seconds before its reported expiry */
+    const TOKEN_EXPIRY_MARGIN = 300;
 
     protected $db;
 
@@ -45,42 +47,66 @@ class ProviderAlbertHeijn extends LookupProvider {
         if ($authkey == null)
             return null;
 
-        $headers = array('X-Application' => 'AHWEBSHOP', 'Authorization' => 'Bearer ' . $authkey);
-        $url     = "https://api.ah.nl/mobile-services/product/search/v1/gtin/" . $barcode;
-        $result  = $this->execute($url, METHOD_GET, null, self::USER_AGENT, $headers);
+        $result = $this->requestProduct($barcode, $authkey);
+
+        // AH invalidates tokens server-side before the local expiry timestamp at times.
+        // Discard the stored token and retry once with a freshly requested one.
+        if ($result == null && $this->lastExecuteExceptionClass == 'UnauthorizedException') {
+            $this->db->deleteLookupProviderData(LookupProviderType::AlbertHeijn);
+            $authkey = $this->getAuthToken();
+            if ($authkey == null)
+                return null;
+            $result = $this->requestProduct($barcode, $authkey);
+        }
+
         if (isset($result["title"]))
             return self::createReturnArray(sanitizeString($result["title"]));
         else
             return null;
     }
 
+    /**
+     * @param string $barcode
+     * @param string $authkey
+     * @return mixed|null Decoded JSON response or null on failure
+     */
+    private function requestProduct(string $barcode, string $authkey) {
+        $headers = array('X-Application' => 'AHWEBSHOP', 'Authorization' => 'Bearer ' . $authkey);
+        $url     = "https://api.ah.nl/mobile-services/product/search/v1/gtin/" . $barcode;
+        return $this->execute($url, METHOD_GET, null, self::USER_AGENT, $headers);
+    }
+
     private function getAuthToken(): ?string {
         $jsonData = $this->db->getLookupProviderData(LookupProviderType::AlbertHeijn);
 
-        if ($jsonData == null) {
-            $newAuthToken = $this->newAuthToken();
-            $this->updateAuthToken($newAuthToken);
-
-            return sanitizeString($newAuthToken["access_token"]);
-        }
+        if ($jsonData == null)
+            return $this->updateAuthToken($this->newAuthToken());
 
         $data = json_decode($jsonData, true);
 
-        if ($data["expires"] < time()) {
-            $newAuthToken = $this->refreshToken($data["refresh_token"]);
-            $this->updateAuthToken($newAuthToken);
+        if (!is_array($data) || !isset($data["access_token"], $data["refresh_token"], $data["expires"]))
+            return $this->updateAuthToken($this->newAuthToken());
 
-            return sanitizeString($newAuthToken["access_token"]);
-        }
+        if ($data["expires"] < time() + self::TOKEN_EXPIRY_MARGIN)
+            return $this->updateAuthToken($this->refreshToken($data["refresh_token"]));
 
         return sanitizeString($data["access_token"]);
     }
 
-    private function updateAuthToken(array $authToken): void {
-        $data = array("access_token" => $authToken["access_token"], "refresh_token" => $authToken["refresh_token"], "expires" => time() + $authToken["expires_in"]);
+    /**
+     * Stores a received token and returns its access token, or null if none was received
+     * @param array|null $authToken
+     * @return string|null
+     */
+    private function updateAuthToken(?array $authToken): ?string {
+        if ($authToken == null || !isset($authToken["access_token"], $authToken["refresh_token"], $authToken["expires_in"]))
+            return null;
+
+        $data     = array("access_token" => $authToken["access_token"], "refresh_token" => $authToken["refresh_token"], "expires" => time() + $authToken["expires_in"]);
         $jsonData = json_encode($data);
-        
+
         $this->db->upsertLookupProviderData(LookupProviderType::AlbertHeijn, $jsonData);
+        return sanitizeString($authToken["access_token"]);
     }
 
     private function newAuthToken(): ?array {
@@ -99,12 +125,8 @@ class ProviderAlbertHeijn extends LookupProvider {
         $url             = "https://api.ah.nl/mobile-auth/v1/auth/token/refresh";
         $authkeyResponse = $this->execute($url, METHOD_POST, null, self::USER_AGENT, null, true, $json);
 
-        if ($authkeyResponse == null) {
+        if ($authkeyResponse == null || !isset($authkeyResponse["access_token"])) {
             $authkeyResponse = $this->newAuthToken();
-        }
-
-        if (!isset($authkeyResponse["access_token"])) {
-            return null;
         }
 
         return $authkeyResponse;

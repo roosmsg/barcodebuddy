@@ -399,9 +399,20 @@ class DatabaseConnection {
 
         if ($row = $res->fetchArray()) {
             return $row["data"];
-        } 
-        
+        }
+
         return null;
+    }
+
+    /**
+     * Deletes stored data for a specific LookupProvider
+     *
+     * @param int $providerType
+     *
+     * @return void
+     */
+    public function deleteLookupProviderData(int $providerType): void {
+        $this->db->exec("DELETE FROM LookupProviderData WHERE providerType=$providerType");
     }
 
     /**

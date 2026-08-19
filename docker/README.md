@@ -1,25 +1,35 @@
 # Docker deployment notes
 
-Production runs an image **built from this fork**: `docker/Dockerfile` takes the
-upstream Docker image `f0rc3/barcodebuddy` (runtime: nginx, php8, redis, evtest,
-supervisor) and replaces the application tree `/app/bbuddy` with this repository,
-re-applying the small edits the upstream Dockerfile makes. Everything on `master`
-is therefore live: the auto-create plugin, the configurable base mode (settings →
-"Use Purchase as base mode", default on), the `BBUDDY_*` env-override fix and the
-repaired Plus Supermarkt lookup provider (upstream still points at the
-decommissioned host `pls-sprmrkt-mw.prd.vdc1.plus.nl`; the fork uses the PLUS app
-endpoint `apiframna.app.plus.nl/api/app/v1/products_by_barcode/<ean>`).
+Production uses the self-contained image defined by `docker/Dockerfile`. The
+image is built directly from this fork; it does not inherit from the upstream
+`f0rc3/barcodebuddy` image. The runtime consists of Alpine 3.24.1, PHP 8.3 FPM,
+Nginx, Redis, Supervisor and the USB scanner utilities required by
+`example/grabInput.sh`.
 
-Build on the Docker host (no local checkout needed):
+Everything on `master` is copied into the image: the auto-create plugin, the
+configurable purchase base mode, the `BBUDDY_*` environment override fix, the
+repaired PLUS and Albert Heijn providers, the Zooplus product-feed provider and
+the overview mode controls. During the build, the Docker-specific source changes
+are verified, the required PHP extensions are checked and every PHP file is
+linted.
 
-    docker build -t barcodebuddy:homelab -f docker/Dockerfile https://github.com/roosmsg/barcodebuddy.git#master
+Build on the Docker VM, using the repository as remote build context:
 
-then redeploy the stack (`docker/docker-compose.yml`, host paths under `/opt/barcodebuddy/`).
-The image is local, so Watchtower does not update it; updating means: merge
-`upstream/master` into `master` (upstream master must match the release the f0rc3
-image was built from), rebuild, redeploy, check the log and the plugin.
+    docker build --pull -t barcodebuddy:docker -f docker/Dockerfile https://github.com/roosmsg/barcodebuddy.git#master
 
-The base mode (Purchase vs Consume) is a normal Barcode Buddy setting now
-(`BASE_MODE_PURCHASE`, shown under Settings as "Use Purchase as base mode"),
-so no runtime patch script is needed; the former `patch-default-purchase.sh`
-has been removed.
+Then redeploy the `barcodebuddy` Portainer stack from
+`docker/docker-compose.yml`. The `/config` volume remains compatible with the
+existing deployment. Port 80 is exposed internally; TLS remains terminated by
+the NPM reverse proxy.
+
+The entrypoint supports the existing `PUID`, `PGID`, `TZ`,
+`ATTACH_BARCODESCANNER`, `IGNORE_SSL_CA`, `IGNORE_SSL_HOST` and `BBUDDY_*`
+environment variables. Supervisor runs Redis, PHP-FPM, Nginx, the websocket
+server, the two-minute Barcode Buddy cron loop and, when enabled, the scanner
+input process. The image includes an HTTP health check on `/login.php`.
+
+The image is local and therefore stays outside Watchtower. Updating means:
+merge `upstream/master` into `master`, rebuild the image, redeploy the stack and
+check the health status, container log, scanner input, lookup providers and
+auto-create plugin. Refresh `/srv/homelab-images/barcodebuddy-docker.tar` with
+the VM's `save-images.sh` after a successful deployment.

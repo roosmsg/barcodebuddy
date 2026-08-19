@@ -89,7 +89,8 @@ function getHtmlSettingsGeneral(): string {
     $html->addDiv($html->buildEditField("BARCODE_GS", "Barcode: Inventory", $config["BARCODE_GS"])->generate(true), null, "flex-settings-child");
     $html->addDiv($html->buildEditField("BARCODE_Q", "Barcode: Quantity", $config["BARCODE_Q"])->generate(true), null, "flex-settings-child");
     $html->addDiv($html->buildEditField("BARCODE_AS", "Barcode: Add to shopping list", $config["BARCODE_AS"])->generate(true), null, "flex-settings-child");
-    $html->addDiv($html->buildEditField("REVERT_TIME", "Revert state to &quot;Purchase&quot; after time passed in minutes", $config["REVERT_TIME"])
+    $baseModeName = ($config["BASE_MODE_PURCHASE"] == "1") ? "Purchase" : "Consume";
+    $html->addDiv($html->buildEditField("REVERT_TIME", "Revert state to &quot;" . $baseModeName . "&quot; after time passed in minutes", $config["REVERT_TIME"])
         ->pattern('-?[0-9]*(\.[0-9]+)?')
         ->onKeyPress('return (event.charCode == 8 || event.charCode == 0) ? null : event.charCode >= 48 && event.charCode <= 57')
         ->generate(true)
@@ -97,7 +98,8 @@ function getHtmlSettingsGeneral(): string {
     $html->addHtml('</div>');
     $html->addLineBreak();
 
-    $html->addCheckbox("REVERT_SINGLE", "Revert to &quot;Purchase&quot; after single item scan in &quot;Open&quot;, &quot;Spoiled&quot; or &quot;Consume all&quot; mode", $config["REVERT_SINGLE"], false, false);
+    $html->addCheckbox("BASE_MODE_PURCHASE", "Use &quot;Purchase&quot; as base mode (instead of &quot;Consume&quot;)", $config["BASE_MODE_PURCHASE"], false, false);
+    $html->addCheckbox("REVERT_SINGLE", "Revert to &quot;" . $baseModeName . "&quot; after single item scan in &quot;Open&quot;, &quot;Spoiled&quot; or &quot;Consume all&quot; mode", $config["REVERT_SINGLE"], false, false);
     $html->addCheckbox("SHOPPINGLIST_REMOVE", "Remove purchased items from shoppinglist", $config["SHOPPINGLIST_REMOVE"], false, false);
     $html->addCheckbox("CONSUME_SAVED_QUANTITY", "Consume amount of quantity saved for barcode", $config["CONSUME_SAVED_QUANTITY"], false, false);
     $html->addCheckbox("USE_GROCY_QU_FACTOR", "Use Grocys quantity conversion", $config["USE_GROCY_QU_FACTOR"], false, false);

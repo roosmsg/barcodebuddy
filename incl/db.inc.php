@@ -87,6 +87,7 @@ class DatabaseConnection {
         "BARCODE_AS" => "BBUDDY-AS",
         "REVERT_TIME" => "10",
         "REVERT_SINGLE" => "1",
+        "BASE_MODE_PURCHASE" => "1",
         "MORE_VERBOSE" => "1",
         "GROCY_API_URL" => null,
         "GROCY_API_KEY" => null,
@@ -253,15 +254,25 @@ class DatabaseConnection {
     public function getTransactionState(): int {
         $res = $this->db->query("SELECT * FROM TransactionState");
         if ($row = $res->fetchArray()) {
-            $state = $row["currentState"];
-            $since = $row["since"];
-            if ($state == STATE_PURCHASE || $this->revertBackToConsume($since))
-                return STATE_PURCHASE;
+            $state     = $row["currentState"];
+            $since     = $row["since"];
+            $baseState = $this->getBaseModeState();
+            if ($state == $baseState || $this->revertBackToConsume($since))
+                return $baseState;
             else
                 return $state;
         } else {
             die("DB Error");
         }
+    }
+
+    /**
+     * Returns the configured base/idle mode: Purchase when BASE_MODE_PURCHASE
+     * is enabled (default), otherwise Consume (stock upstream behaviour).
+     * @return int STATE_PURCHASE or STATE_CONSUME
+     */
+    public function getBaseModeState(): int {
+        return (BBConfig::getInstance()["BASE_MODE_PURCHASE"] == "1") ? STATE_PURCHASE : STATE_CONSUME;
     }
 
     /**

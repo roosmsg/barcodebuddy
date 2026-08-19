@@ -94,6 +94,7 @@ const OVERRIDDEN_USER_CONFIG       = array(
                                          //"BARCODE_AS"                  => "BBUDDY-AS",
                                          //"REVERT_TIME"                 => "10",
                                          //"REVERT_SINGLE"               => "1",
+                                         //"BASE_MODE_PURCHASE"          => "1",
                                          //"MORE_VERBOSE"                => "1",
                                          //"GROCY_API_URL"               => null,
                                          //"GROCY_API_KEY"               => null,

@@ -409,8 +409,9 @@ function processKnownBarcode(GrocyProduct $productInfo, string $barcode, bool $w
                     ->createLog();
             }
             if ($config["REVERT_SINGLE"]) {
-                $db->saveLog("Reverting back to Purchase", true);
-                $db->setTransactionState(STATE_PURCHASE);
+                $baseState = $db->getBaseModeState();
+                $db->saveLog("Reverting back to " . stateToString($baseState), true);
+                $db->setTransactionState($baseState);
             }
             $fileLock->removeLock();
             return $output;
@@ -434,8 +435,9 @@ function processKnownBarcode(GrocyProduct $productInfo, string $barcode, bool $w
             }
             $fileLock->removeLock();
             if ($config["REVERT_SINGLE"]) {
-                $db->saveLog("Reverting back to Purchase", true);
-                $db->setTransactionState(STATE_PURCHASE);
+                $baseState = $db->getBaseModeState();
+                $db->saveLog("Reverting back to " . stateToString($baseState), true);
+                $db->setTransactionState($baseState);
             }
             return $output;
         case STATE_PURCHASE:
@@ -475,8 +477,9 @@ function processKnownBarcode(GrocyProduct $productInfo, string $barcode, bool $w
             }
             $fileLock->removeLock();
             if ($config["REVERT_SINGLE"]) {
-                $db->saveLog("Reverting back to Purchase", true);
-                $db->setTransactionState(STATE_PURCHASE);
+                $baseState = $db->getBaseModeState();
+                $db->saveLog("Reverting back to " . stateToString($baseState), true);
+                $db->setTransactionState($baseState);
             }
             return $output;
         case STATE_GETSTOCK:

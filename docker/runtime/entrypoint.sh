@@ -29,7 +29,11 @@ if [[ "$(id -u barcodebuddy)" != "$PUID" ]]; then
     usermod -o -u "$PUID" -g barcodebuddy barcodebuddy
 fi
 
-install -d -m 0755 -o barcodebuddy -g barcodebuddy /config /config/data /run/php
+# /home/barcodebuddy must exist before the scanner service starts: the scan
+# dispatch runs "sudo -H -u barcodebuddy screen -dm php index.php" and screen 5
+# keeps its session sockets in $HOME/.screen.
+install -d -m 0755 -o barcodebuddy -g barcodebuddy \
+    /config /config/data /run/php /home/barcodebuddy
 chown -R barcodebuddy:barcodebuddy /config
 
 if [[ -n "${TZ:-}" ]]; then

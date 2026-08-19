@@ -52,6 +52,7 @@ RUN set -eux; \
         /etc/supervisor.d \
         /run/nginx \
         /run/php; \
+    install -d -m 0755 -o barcodebuddy -g barcodebuddy /home/barcodebuddy; \
     ln -sf /usr/bin/php83 /usr/bin/php; \
     ln -s /config /data; \
     sed -i \

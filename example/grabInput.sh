@@ -137,7 +137,11 @@ returnAllowedCharacter() {
 
 enteredText=""
 echo "[ScannerConnection] Waiting for scanner input"
-evtest --grab "$deviceToUse" | while read line; do
+eventReader=(evtest --grab "$deviceToUse")
+if command -v stdbuf >/dev/null 2>&1; then
+  eventReader=(stdbuf -oL "${eventReader[@]}")
+fi
+"${eventReader[@]}" | while IFS= read -r line; do
   key="$(returnAllowedCharacter "{$line}")"
   if [[ "$key" != "$NON_ALLOWED_CHAR" ]]; then
     if [[ "$key" != "KEY_ENTER" ]]; then

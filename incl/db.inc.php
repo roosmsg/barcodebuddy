@@ -208,7 +208,7 @@ class DatabaseConnection {
      * @return void
      */
     private function insertDefaultValues(): void {
-        $this->db->exec("INSERT INTO TransactionState(id,currentState,since) SELECT 1, 0, datetime('now','localtime') WHERE NOT EXISTS(SELECT 1 FROM TransactionState WHERE id = 1)");
+        $this->db->exec("INSERT INTO TransactionState(id,currentState,since) SELECT 1, 0, CAST(strftime('%s','now') AS INTEGER) WHERE NOT EXISTS(SELECT 1 FROM TransactionState WHERE id = 1)");
         $this->db->exec("INSERT INTO BBConfig(id,data,value) SELECT 1, \"version\", \"" . BB_VERSION . "\" WHERE NOT EXISTS(SELECT 1 FROM BBConfig WHERE id = 1)");
         foreach (self::DEFAULT_VALUES as $key => $value) {
             $this->db->exec("INSERT INTO BBConfig(data,value) SELECT \"" . $key . "\", \"" . $value . "\" WHERE NOT EXISTS(SELECT 1 FROM BBConfig WHERE data = '$key')");
@@ -259,6 +259,12 @@ class DatabaseConnection {
         if ($row = $res->fetchArray()) {
             $state     = $row["currentState"];
             $since     = $row["since"];
+            if (!is_numeric($since)) {
+                $parsedTimestamp = strtotime($since);
+                $since           = ($parsedTimestamp !== false) ? $parsedTimestamp : $this->getTimestamp();
+            } else {
+                $since = (int)$since;
+            }
             $baseState = $this->getBaseModeState();
             if ($state == $baseState || $this->revertBackToConsume($since))
                 return $baseState;

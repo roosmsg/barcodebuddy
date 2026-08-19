@@ -222,6 +222,7 @@ function getProviderListItems(UiEditor $html): array {
     $result["id" . LOOKUP_ID_ALBERTHEIJN]   = $html->addListItem($html->addCheckbox('LOOKUP_USE_AH', 'Albert Heijn', $config["LOOKUP_USE_AH"], false, false, true), "Uses AH.nl", LOOKUP_ID_ALBERTHEIJN, true);
     $result["id" . LOOKUP_ID_PLUS]          = $html->addListItem($html->addCheckbox('LOOKUP_USE_PLUS', 'Plus Supermarkt', $config["LOOKUP_USE_PLUS"], false, false, true), "Uses PLUS.nl", LOOKUP_ID_PLUS, true);
     $result["id" . LOOKUP_ID_JUMBO]         = $html->addListItem($html->addCheckbox('LOOKUP_USE_JUMBO', 'Jumbo', $config["LOOKUP_USE_JUMBO"], false, false, true), "Uses Jumbo.com (slow)", LOOKUP_ID_JUMBO, true);
+    $result["id" . LOOKUP_ID_ZOOPLUS]       = $html->addListItem($html->addCheckbox('LOOKUP_USE_ZOOPLUS', 'Zooplus Nederland', $config["LOOKUP_USE_ZOOPLUS"], false, false, true), "Uses an undocumented Zooplus.nl search endpoint", LOOKUP_ID_ZOOPLUS, true);
     $result["id" . LOOKUP_ID_UPCDATABASE]   = $html->addListItem((new CheckBoxBuilder(
         "LOOKUP_USE_UPC_DATABASE",
         "UPC Database",

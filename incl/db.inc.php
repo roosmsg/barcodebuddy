@@ -53,6 +53,7 @@ const LOOKUP_ID_OPENGTINDB    = "6";
 const LOOKUP_ID_FEDERATION    = "7";
 const LOOKUP_ID_PLUS          = "8";
 const LOOKUP_ID_DISCOGS       = "9";
+const LOOKUP_ID_ZOOPLUS       = "10";
 
 /**
  * Dockerfile changes this to "1", so that the default is true
@@ -108,6 +109,7 @@ class DatabaseConnection {
         "LOOKUP_USE_UPC_DATABASE" => "0",
         "LOOKUP_USE_OPEN_GTIN_DATABASE" => "0",
         "LOOKUP_USE_DISCOGS" => "0",
+        "LOOKUP_USE_ZOOPLUS" => "0",
         "LOOKUP_USE_BBUDDY_SERVER" => "0",
         "LOOKUP_UPC_DATABASE_KEY" => null,
         "LOOKUP_OPENGTIN_KEY" => null,
@@ -128,6 +130,7 @@ class DatabaseConnection {
             LOOKUP_ID_JUMBO . "," .
             LOOKUP_ID_OPENGTINDB . "," .
             LOOKUP_ID_DISCOGS . "," .
+            LOOKUP_ID_ZOOPLUS . "," .
             LOOKUP_ID_FEDERATION);
 
 

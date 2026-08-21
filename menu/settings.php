@@ -103,11 +103,18 @@ function getHtmlSettingsGeneral(): string {
     $html->addCheckbox("SHOPPINGLIST_REMOVE", "Remove purchased items from shoppinglist", $config["SHOPPINGLIST_REMOVE"], false, false);
     $html->addCheckbox("CONSUME_SAVED_QUANTITY", "Consume amount of quantity saved for barcode", $config["CONSUME_SAVED_QUANTITY"], false, false);
     $html->addCheckbox("USE_GROCY_QU_FACTOR", "Use Grocys quantity conversion", $config["USE_GROCY_QU_FACTOR"], false, false);
+    $html->addCheckbox("PRICE_FROM_USERFIELD", "Set the price on a purchase from a Grocy userfield", $config["PRICE_FROM_USERFIELD"], false, false);
     $html->addCheckbox("WS_FULLSCREEN", "Show Screen module in fullscreen", $config["WS_FULLSCREEN"], false, false);
     $html->addCheckbox("USE_GENERIC_NAME", "Use generic names for lookup", $config["USE_GENERIC_NAME"], false, false);
     $html->addCheckbox("SHOW_STOCK_ON_SCAN", "Show stock amount on scan", $config["SHOW_STOCK_ON_SCAN"], false, false);
     $html->addCheckbox("SAVE_BARCODE_NAME", "Save name from lookup to barcode", $config["SAVE_BARCODE_NAME"], false, false);
     $html->addCheckbox("MORE_VERBOSE", "More verbose logs", $config["MORE_VERBOSE"], false, false);
+    $html->addLineBreak();
+    $html->addHtml('<div class="flex-settings">');
+    $html->addDiv($html->buildEditField("PRICE_USERFIELD", "Userfield holding the shelf price", $config["PRICE_USERFIELD"])->generate(true), null, "flex-settings-child");
+    $html->addDiv($html->buildEditField("PACKAGING_USERFIELD", "Userfield holding the package contents", $config["PACKAGING_USERFIELD"])->generate(true), null, "flex-settings-child");
+    $html->addHtml('</div>');
+    $html->addHtml('<small><i>Only used when the setting above is enabled. The price of one package is divided by its contents and by Grocys purchase-to-stock factor, as Grocy stores a price per stock quantity unit.</i></small>');
     $html->addLineBreak(2);
     $html->addHtml('<small><i>Hint: You can find picture files of the default barcodes in the &quot;example&quot; folder or <a style="color: inherit;" href="https://github.com/Forceu/barcodebuddy/tree/master/example/defaultBarcodes">online</a></i></small>');
     $html->addHiddenField("isSaved", "1");

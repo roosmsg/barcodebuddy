@@ -25,6 +25,7 @@ require_once __DIR__ . "/curl.inc.php";
 
 const API_O_BARCODES       = 'objects/product_barcodes';
 const API_O_PRODUCTS       = 'objects/products';
+const API_UF_PRODUCTS      = 'userfields/products';
 const API_STOCK_PRODUCTS   = 'stock/products';
 const API_ALL_PRODUCTS     = 'stock';
 const API_SHOPPINGLIST     = 'stock/shoppinglist/';
@@ -68,7 +69,12 @@ class GrocyProduct {
         $result->unit                  = sanitizeString($infoArray["quantity_unit_stock"]["name"]);
         $result->barcodes              = $infoArray["product_barcodes"];
 
-        if (isset($infoArray["product"]["qu_conversion_factor_purchase_to_stock"]))
+        // Grocy returns this at the top level of the product details, not inside
+        // "product" (StockService::GetProductDetails). Reading it from "product"
+        // only silently failed, leaving the factor at 1 for every product.
+        if (isset($infoArray["qu_conversion_factor_purchase_to_stock"]))
+            $result->quFactor = sanitizeString($infoArray["qu_conversion_factor_purchase_to_stock"]);
+        elseif (isset($infoArray["product"]["qu_conversion_factor_purchase_to_stock"]))
             $result->quFactor = sanitizeString($infoArray["product"]["qu_conversion_factor_purchase_to_stock"]);
         else
             $result->quFactor = 1;
@@ -162,6 +168,88 @@ class API {
             }
         }
         return null;
+    }
+
+    /**
+     * Shelf price for a product, taken from Grocy userfields and converted to a
+     * price per stock quantity unit, which is what Grocy expects on a purchase.
+     *
+     * Grocy has no price field on a product: everything it shows about prices is
+     * derived from the price on a stock booking. Where the shelf price is known
+     * from an external source and kept in a userfield, this turns it into that
+     * booking price so a scan produces a complete purchase.
+     *
+     * The price userfield holds the price of one package and the packaging
+     * userfield holds its contents in the purchase quantity unit, so:
+     *
+     *   price per stock unit = price / (package contents * purchase-to-stock factor)
+     *
+     * A pack of ketchup at 1.00 for 190 ml, purchased and stocked in millilitres,
+     * gives 0.005263 per ml. A 1000 g net of bananas at 2.29, purchased in grams
+     * but stocked per piece at 120 g each, gives 2.29 / (1000 * 0.00833) = 0.275
+     * per banana. Skipping the factor would price every single banana at 2.29.
+     *
+     * @param GrocyProduct $product Product to look up, already fetched by the caller
+     * @return string|null Price per stock quantity unit, or null when unavailable
+     */
+    public static function getShelfPricePerStockUnit(GrocyProduct $product): ?string {
+        $config = BBConfig::getInstance();
+        if (!$config["PRICE_FROM_USERFIELD"])
+            return null;
+
+        $priceField     = trim($config["PRICE_USERFIELD"]);
+        $packagingField = trim($config["PACKAGING_USERFIELD"]);
+        if ($priceField == "" || $packagingField == "")
+            return null;
+
+        $result = null;
+        $curl   = new CurlGenerator(API_UF_PRODUCTS . "/" . $product->id);
+        try {
+            $result = $curl->execute(true);
+        } catch (Exception $e) {
+            // A missing shelf price must never hold up the booking itself.
+            self::processError($e, "Could not look up shelf price userfields");
+            return null;
+        }
+        if (!is_array($result))
+            return null;
+
+        $price = self::parseDecimal($result[$priceField] ?? null);
+        if ($price == null || $price <= 0)
+            return null;
+
+        $contents = self::parseDecimal($result[$packagingField] ?? null);
+        if ($contents == null || $contents <= 0)
+            return null;
+
+        $factor = floatval($product->quFactor);
+        if ($factor <= 0)
+            $factor = 1;
+
+        $perStockUnit = $price / ($contents * $factor);
+        if (!is_finite($perStockUnit) || $perStockUnit <= 0)
+            return null;
+
+        return strval(round($perStockUnit, 6));
+    }
+
+    /**
+     * Reads the leading number of a userfield value. Accepts a bare number as
+     * well as one with a unit behind it, which is how packaging is written:
+     * "1000 g", "190 ml", "10 st.". A comma is treated as a decimal separator.
+     *
+     * @param mixed $value
+     * @return float|null
+     */
+    private static function parseDecimal($value): ?float {
+        if ($value === null)
+            return null;
+        $normalised = str_replace(",", ".", trim(strval($value)));
+        if ($normalised == "")
+            return null;
+        if (preg_match('/^\s*([0-9]+(?:\.[0-9]+)?)/', $normalised, $matches) !== 1)
+            return null;
+        return floatval($matches[1]);
     }
 
     /**

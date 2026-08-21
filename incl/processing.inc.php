@@ -456,6 +456,12 @@ function processKnownBarcode(GrocyProduct $productInfo, string $barcode, bool $w
                 ->setWebsocketResultCode(WS_RESULT_PRODUCT_FOUND)
                 ->addProductFoundText()
                 ->createLog();
+            // Without a price the booking lands in Grocy with an empty price, and
+            // everything Grocy derives from it - last price, stock value, recipe
+            // costs, the price chart - stays at zero. Where the shelf price is
+            // known from a userfield, fill it in here.
+            if ($price === null)
+                $price = API::getShelfPricePerStockUnit($productInfo);
             API::purchaseProduct($productInfo->id, $amount, $bestBeforeInDays, $price, $fileLock, $productInfo->defaultBestBeforeDays);
             //no $fileLock->removeLock() needed, as it is done in API::purchaseProduct
             return $output;

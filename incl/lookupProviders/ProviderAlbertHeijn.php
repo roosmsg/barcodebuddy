@@ -21,6 +21,8 @@ class ProviderAlbertHeijn extends LookupProvider {
     const USER_AGENT = "Appie/8.22.3";
     /** Renew the token this many seconds before its reported expiry */
     const TOKEN_EXPIRY_MARGIN = 300;
+    /** Errors after which the stored token is discarded and the lookup retried once */
+    const STALE_TOKEN_EXCEPTIONS = array("UnauthorizedException", "InvalidParameterException");
 
     protected $db;
 
@@ -50,8 +52,10 @@ class ProviderAlbertHeijn extends LookupProvider {
         $result = $this->requestProduct($barcode, $authkey);
 
         // AH invalidates tokens server-side before the local expiry timestamp at times.
+        // That surfaces as a 401, but a 400 has been seen as well on a request that
+        // is valid by itself, so both are treated as a possibly stale token.
         // Discard the stored token and retry once with a freshly requested one.
-        if ($result == null && $this->lastExecuteExceptionClass == 'UnauthorizedException') {
+        if ($result == null && in_array($this->lastExecuteExceptionClass, self::STALE_TOKEN_EXCEPTIONS)) {
             $this->db->deleteLookupProviderData(LookupProviderType::AlbertHeijn);
             $authkey = $this->getAuthToken();
             if ($authkey == null)

@@ -216,6 +216,7 @@ function processUnknownBarcode(string $barcode, bool $websocketEnabled, LockGene
             $db->insertUnrecognizedBarcode($barcode, $amount, $bestBeforeInDays, $price, $productname);
             $log    = new LogOutput("Unknown barcode looked up, found name: " . $productname["name"], EVENT_TYPE_ADD_NEW_BARCODE, $barcode);
             $output = $log
+                ->addLookupProviderToText($productname["provider"] ?? null)
                 ->insertBarcodeInWebsocketText()
                 ->setSendWebsocket($websocketEnabled)
                 ->setCustomWebsocketText($productname["name"])
@@ -794,6 +795,17 @@ class LogOutput {
     public function insertBarcodeInWebsocketText(): LogOutput {
         if ($this->barcode != null)
             $this->websocketText .= " Barcode: $this->barcode";
+        return $this;
+    }
+
+    /**
+     * Appends the lookup provider that supplied the name, after the barcode
+     * @param string|null $providerName
+     * @return LogOutput
+     */
+    public function addLookupProviderToText(?string $providerName): LogOutput {
+        if ($providerName != null)
+            $this->logText .= " [$providerName]";
         return $this;
     }
 

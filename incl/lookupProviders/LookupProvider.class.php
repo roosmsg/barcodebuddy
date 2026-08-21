@@ -57,6 +57,14 @@ class LookupProvider {
     }
 
     /**
+     * Display name of this provider, as used in log lines
+     * @return string|null
+     */
+    public function getProviderName(): ?string {
+        return $this->providerName;
+    }
+
+    /**
      * @return bool
      */
     protected function isProviderEnabled(): bool {

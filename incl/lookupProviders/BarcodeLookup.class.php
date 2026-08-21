@@ -48,9 +48,12 @@ class BarcodeLookup {
         $config       = BBConfig::getInstance();
         $orderAsArray = explode(",", $config["LOOKUP_ORDER"]);
         foreach ($orderAsArray as $orderId) {
-            $result = (new self::$providers[$orderId]())->lookupBarcode($barcode);
-            if ($result != null)
+            $provider = new self::$providers[$orderId]();
+            $result   = $provider->lookupBarcode($barcode);
+            if ($result != null) {
+                $result["provider"] = $provider->getProviderName();
                 return $result;
+            }
         }
         return null;
     }
